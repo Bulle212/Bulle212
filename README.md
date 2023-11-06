@@ -1,4 +1,3 @@
 - 👋 Hi, I’m @Bulle212
-- 👀 I’m interested in coding
 - 🌱 I’m currently learning Python🐍
-- More at: https://fakecrime.bio/Bulle
+- 👀 More at: https://fakecrime.bio/Bulle
