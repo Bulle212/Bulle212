@@ -1,3 +1,3 @@
 - 👋 Hi, I’m @Bulle212
-- 🌱 I’m currently learning Python🐍
+- 🌱 I’m currently learning Python
 - 👀 More at: https://fakecrime.bio/Bulle
