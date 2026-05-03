@@ -19,14 +19,14 @@ import getpass
 
 from playwright.sync_api import sync_playwright, Browser, Page, TimeoutError as PWTimeout
 
-SLOW_MO = 30
+SLOW_MO = 0
 
 
 def log(msg: str) -> None:
     print(f"  {msg}")
 
 
-def try_click(page: Page, selectors: list, timeout: int = 8000) -> bool:
+def try_click(page: Page, selectors: list, timeout: int = 5000) -> bool:
     for sel in selectors:
         try:
             page.wait_for_selector(sel, timeout=timeout, state="visible")
@@ -37,7 +37,7 @@ def try_click(page: Page, selectors: list, timeout: int = 8000) -> bool:
     return False
 
 
-def try_fill(page: Page, selectors: list, value: str, timeout: int = 8000) -> bool:
+def try_fill(page: Page, selectors: list, value: str, timeout: int = 5000) -> bool:
     for sel in selectors:
         try:
             page.wait_for_selector(sel, timeout=timeout, state="visible")
@@ -48,7 +48,7 @@ def try_fill(page: Page, selectors: list, value: str, timeout: int = 8000) -> bo
     return False
 
 
-def try_click_text(page: Page, texts: list, timeout: int = 8000) -> bool:
+def try_click_text(page: Page, texts: list, timeout: int = 5000) -> bool:
     for text in texts:
         try:
             el = page.get_by_text(text, exact=False).first
@@ -73,7 +73,7 @@ def secure_account(page: Page, email: str, recovery_code: str,
     # ── Step 1-2: Go to reset page and enter email ───────────────────────
     log("Step 1: Opening Microsoft password reset page...")
     page.goto("https://account.live.com/password/reset", wait_until="domcontentloaded")
-    page.wait_for_load_state("networkidle")
+    page.wait_for_load_state("domcontentloaded")
 
     log("Step 2: Entering email address...")
     if not try_fill(page, ['input[name="iLoginName"]', 'input[name="loginfmt"]', 'input[type="email"]'], email):
@@ -81,7 +81,7 @@ def secure_account(page: Page, email: str, recovery_code: str,
         return ""
 
     try_click(page, ['input[type="submit"]', '#idSIButton9', 'button[type="submit"]'])
-    page.wait_for_load_state("networkidle")
+    page.wait_for_load_state("domcontentloaded")
 
     # ── Step 3: Click "I don't have this information." ───────────────────
     log("Step 3: Clicking 'I don't have this information.'...")
@@ -96,7 +96,7 @@ def secure_account(page: Page, email: str, recovery_code: str,
         log("[!] Could not find that button — please click it manually.")
         time.sleep(15)
 
-    page.wait_for_load_state("networkidle")
+    page.wait_for_load_state("domcontentloaded")
 
     # ── Step 4b: Select "recovery code" option if a choice is shown ──────
     # Microsoft may show a list of options — pick the recovery code one
@@ -106,7 +106,7 @@ def secure_account(page: Page, email: str, recovery_code: str,
         "Use a recovery code",
         "Brug en gendannelseskode",
     ], timeout=5000)
-    page.wait_for_load_state("networkidle")
+    page.wait_for_load_state("domcontentloaded")
 
     # ── Step 5: Enter the recovery code ──────────────────────────────────
     log("Step 5: Entering recovery code...")
@@ -124,7 +124,7 @@ def secure_account(page: Page, email: str, recovery_code: str,
         time.sleep(20)
 
     try_click(page, ['input[type="submit"]', 'button[type="submit"]', '#idSIButton9'])
-    page.wait_for_load_state("networkidle")
+    page.wait_for_load_state("domcontentloaded")
 
     # ── Step 6: Add new security email ───────────────────────────────────
     log("Step 6: Adding new security email...")
@@ -137,7 +137,7 @@ def secure_account(page: Page, email: str, recovery_code: str,
 
     if filled:
         try_click(page, ['input[type="submit"]', 'button[type="submit"]', '#idSIButton9'])
-        page.wait_for_load_state("networkidle")
+        page.wait_for_load_state("domcontentloaded")
         log(f"[+] Security email set to {new_security_email}")
     else:
         log("[-] No email field shown at this step (Microsoft may skip this).")
@@ -161,7 +161,7 @@ def secure_account(page: Page, email: str, recovery_code: str,
         ], new_password, timeout=3000)
 
         try_click(page, ['input[type="submit"]', 'button[type="submit"]', '#idSIButton9'])
-        page.wait_for_load_state("networkidle")
+        page.wait_for_load_state("domcontentloaded")
         log("[+] New password set.")
 
     # ── Step 8: Capture new recovery code ────────────────────────────────
@@ -196,19 +196,19 @@ def extract_recovery_code(page: Page) -> str:
 def generate_recovery_code(page: Page) -> str:
     """Navigate to security settings and generate a new recovery code."""
     try:
-        page.goto("https://account.microsoft.com/security", wait_until="networkidle", timeout=20000)
+        page.goto("https://account.microsoft.com/security", wait_until="domcontentloaded", timeout=20000)
 
         try_click_text(page, ["Advanced security options", "More security options"], timeout=8000)
-        page.wait_for_load_state("networkidle")
+        page.wait_for_load_state("domcontentloaded")
 
         try_click_text(page, [
             "Get a new code", "Generate a new recovery code",
             "Generate new code", "Recovery code",
         ], timeout=8000)
-        page.wait_for_load_state("networkidle")
+        page.wait_for_load_state("domcontentloaded")
 
         try_click_text(page, ["Get a new code", "Generate", "Yes", "OK"], timeout=5000)
-        page.wait_for_load_state("networkidle")
+        page.wait_for_load_state("domcontentloaded")
 
         code = extract_recovery_code(page)
         if code:
@@ -226,16 +226,16 @@ def generate_recovery_code(page: Page) -> str:
 
 def revoke_sessions(page: Page) -> bool:
     try:
-        page.goto("https://account.microsoft.com/security", wait_until="networkidle", timeout=20000)
+        page.goto("https://account.microsoft.com/security", wait_until="domcontentloaded", timeout=20000)
         found = try_click_text(page, [
             "Sign out everywhere", "Sign out of all sessions",
         ], timeout=8000)
         if not found:
             log("[-] 'Sign out everywhere' button not found.")
             return False
-        page.wait_for_load_state("networkidle")
+        page.wait_for_load_state("domcontentloaded")
         try_click_text(page, ["Sign out", "Yes", "OK", "Confirm"], timeout=5000)
-        page.wait_for_load_state("networkidle")
+        page.wait_for_load_state("domcontentloaded")
         log("[+] Signed out of all other sessions.")
         return True
     except Exception as e:
@@ -246,7 +246,7 @@ def revoke_sessions(page: Page) -> bool:
 def remove_devices(page: Page) -> int:
     removed = 0
     try:
-        page.goto("https://account.microsoft.com/devices", wait_until="networkidle", timeout=20000)
+        page.goto("https://account.microsoft.com/devices", wait_until="domcontentloaded", timeout=20000)
         while True:
             try:
                 btn = page.get_by_role("button", name=re.compile(r"remove\s*(device|this)", re.I)).first
@@ -260,9 +260,9 @@ def remove_devices(page: Page) -> int:
             except Exception:
                 pass
             btn.click()
-            page.wait_for_load_state("networkidle")
+            page.wait_for_load_state("domcontentloaded")
             try_click_text(page, ["Remove", "Yes", "Confirm", "OK"], timeout=5000)
-            page.wait_for_load_state("networkidle")
+            page.wait_for_load_state("domcontentloaded")
             log(f"[+] Removed device: {name.strip()}")
             removed += 1
             time.sleep(1)
