@@ -467,13 +467,11 @@ def ask(prompt: str) -> str:
 
 
 def ask_password(prompt: str, min_len: int = 12) -> str:
+    print("  (characters are hidden while you type — this is normal)")
     while True:
         pw = getpass.getpass(prompt)
         if len(pw) < min_len:
             print(f"  Password must be at least {min_len} characters.")
-            continue
-        if pw != getpass.getpass("  Confirm new password: "):
-            print("  Passwords do not match.")
             continue
         return pw
 
