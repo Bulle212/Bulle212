@@ -19,7 +19,7 @@ import getpass
 
 from playwright.sync_api import sync_playwright, Browser, Page, TimeoutError as PWTimeout
 
-SLOW_MO = 150
+SLOW_MO = 30
 
 
 def log(msg: str) -> None:
@@ -70,46 +70,32 @@ def secure_account(page: Page, email: str, recovery_code: str,
     Runs the full recovery flow and returns the new recovery code.
     """
 
-    # ── Step 1-2: Go to login page and enter email ───────────────────────
-    log("Step 1: Opening Microsoft login page...")
-    page.goto("https://login.live.com", wait_until="domcontentloaded")
+    # ── Step 1-2: Go to reset page and enter email ───────────────────────
+    log("Step 1: Opening Microsoft password reset page...")
+    page.goto("https://account.live.com/password/reset", wait_until="domcontentloaded")
     page.wait_for_load_state("networkidle")
 
     log("Step 2: Entering email address...")
-    if not try_fill(page, ['input[name="loginfmt"]', 'input[type="email"]'], email):
+    if not try_fill(page, ['input[name="iLoginName"]', 'input[name="loginfmt"]', 'input[type="email"]'], email):
         log("[!] Could not find email field.")
         return ""
 
     try_click(page, ['input[type="submit"]', '#idSIButton9', 'button[type="submit"]'])
     page.wait_for_load_state("networkidle")
-    time.sleep(1)
 
-    # ── Step 3: Click "Forgot password" ──────────────────────────────────
-    log("Step 3: Clicking 'Forgot password'...")
-    found = try_click(page, ['#idA_PWD_ForgotPassword', 'a[id*="ForgotPassword"]'], timeout=5000)
-    if not found:
-        found = try_click_text(page, ["Forgot my password", "Forgot password", "forgot password"], timeout=5000)
-    if not found:
-        log("[!] Could not find 'Forgot password' link — please click it manually.")
-        time.sleep(15)
-
-    page.wait_for_load_state("networkidle")
-    time.sleep(1)
-
-    # ── Step 4: Select "I don't have any of these" ───────────────────────
-    log("Step 4: Selecting 'I don't have any of these'...")
+    # ── Step 3: Click "I don't have this information." ───────────────────
+    log("Step 3: Clicking 'I don't have this information.'...")
     found = try_click_text(page, [
+        "I don't have this information",
         "I don't have any of these",
-        "I don't have any of those",
+        "don't have this information",
         "don't have any",
-        "None of these",
     ], timeout=8000)
     if not found:
-        log("[!] Could not find 'I don't have any of these' — please click it manually.")
+        log("[!] Could not find that button — please click it manually.")
         time.sleep(15)
 
     page.wait_for_load_state("networkidle")
-    time.sleep(1)
 
     # ── Step 5: Enter recovery code ──────────────────────────────────────
     log("Step 5: Entering recovery code...")
@@ -128,7 +114,6 @@ def secure_account(page: Page, email: str, recovery_code: str,
 
     try_click(page, ['input[type="submit"]', 'button[type="submit"]', '#idSIButton9'])
     page.wait_for_load_state("networkidle")
-    time.sleep(1)
 
     # ── Step 6: Add new security email ───────────────────────────────────
     log("Step 6: Adding new security email...")
@@ -142,7 +127,6 @@ def secure_account(page: Page, email: str, recovery_code: str,
     if filled:
         try_click(page, ['input[type="submit"]', 'button[type="submit"]', '#idSIButton9'])
         page.wait_for_load_state("networkidle")
-        time.sleep(1)
         log(f"[+] Security email set to {new_security_email}")
     else:
         log("[-] No email field shown at this step (Microsoft may skip this).")
@@ -167,7 +151,6 @@ def secure_account(page: Page, email: str, recovery_code: str,
 
         try_click(page, ['input[type="submit"]', 'button[type="submit"]', '#idSIButton9'])
         page.wait_for_load_state("networkidle")
-        time.sleep(2)
         log("[+] New password set.")
 
     # ── Step 8: Capture new recovery code ────────────────────────────────
