@@ -86,6 +86,7 @@ def secure_account(page: Page, email: str, recovery_code: str,
     # ── Step 3: Click "I don't have this information." ───────────────────
     log("Step 3: Clicking 'I don't have this information.'...")
     found = try_click_text(page, [
+        "Jeg har ikke nogen af dem",
         "I don't have this information",
         "I don't have any of these",
         "don't have this information",
