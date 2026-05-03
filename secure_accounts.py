@@ -98,7 +98,17 @@ def secure_account(page: Page, email: str, recovery_code: str,
 
     page.wait_for_load_state("networkidle")
 
-    # ── Step 5: Enter recovery code ──────────────────────────────────────
+    # ── Step 4b: Select "recovery code" option if a choice is shown ──────
+    # Microsoft may show a list of options — pick the recovery code one
+    try_click_text(page, [
+        "Gendannelseskode",        # Danish: Recovery code
+        "recovery code",
+        "Use a recovery code",
+        "Brug en gendannelseskode",
+    ], timeout=5000)
+    page.wait_for_load_state("networkidle")
+
+    # ── Step 5: Enter the recovery code ──────────────────────────────────
     log("Step 5: Entering recovery code...")
     code = recovery_code.strip().replace(" ", "").replace("-", "")
     filled = try_fill(page, [
